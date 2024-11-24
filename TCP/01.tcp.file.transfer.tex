@@ -1,0 +1,140 @@
+\documentclass[12pt]{article}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Customizing code blocks
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{gray},
+    showstringspaces=false,
+    frame=single,
+    breaklines=true
+}
+
+\title{TCP File Transfer}
+\author{Nguyen Duc Tam - 22BI13400}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{1. Protocol Design}
+
+The protocol was designed for a simple file transfer using a client-server model using socket.
+
+\begin{verbatim}
+        +-----------------+           +-----------------+
+        |     Client      |           |     Server      |
+        +-----------------+           +-----------------+
+                |                             |
+                |       Connect to Server     |
+                |---------------------------->|
+                |                             |
+                |         File Transfer       |
+                |---------------------------->|
+                |                             |
+                |          Acknowledge        |
+                |<----------------------------|
+\end{verbatim}
+
+The client initiates a connection to the server, sends the file data in chunks, and closes the connection.
+
+\section*{2. System Organization}
+
+The system consists of two components:
+\begin{itemize}
+    \item \textbf{Server:} Waits for a connection, receives file data from the client, and saves it locally.
+    \item \textbf{Client:} Connects to the server and sends the file.
+\end{itemize}
+
+\begin{verbatim}
+            +-----------------+           +-----------------+
+            |     Client      |           |     Server      |
+            +-----------------+           +-----------------+
+                    |                             |
+                    |        Sends File Data      |
+                    |---------------------------->|
+                    |                             |
+                    |          Saves File         |
+                    |<----------------------------|
+\end{verbatim}
+
+\section*{3. Implementation of File Transfer}
+
+The file transfer is implemented using Python's \texttt{socket} library. 
+
+\subsection*{Server Code}
+\begin{lstlisting}
+import socket
+
+# Set up
+host="0.0.0.0"
+port=12345
+buffer_size=1024
+output_file="file_received.txt"
+
+# Initialize server
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind((host, port))
+server_socket.listen(1)
+
+print(f"Server is waiting on {host}:{port}...")
+
+# Connect with client
+client_connection, client_address = server_socket.accept()
+print(f"Connected with {client_address}")
+
+# Receive file
+with open(output_file, "wb") as file:
+    while True:
+        data = client_connection.recv(buffer_size)
+        if not data:
+            break
+        file.write(data)
+
+print("File received")
+
+# Close connection and server
+client_connection.close()
+server_socket.close()
+\end{lstlisting}
+
+\subsection*{Client Code}
+\begin{lstlisting}
+import socket
+
+# Set up
+filename = input("Input filename: ")
+host="0.0.0.0"
+port=12345
+buffer_size=1024
+
+# Initialize connection with server
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((host, port))
+
+print(f"Set up connection with {host}:{port}")
+
+# Send file
+with open(filename, "rb") as file:
+    while True:
+        data = file.read(buffer_size)
+        if not data:
+            break
+        client_socket.sendall(data)
+
+print("Sent successfully.")
+
+# Close connection
+client_socket.close()
+\end{lstlisting}
+
+\section*{4. Task Distribution}
+
+The task is handled individually and locally.
+
+\end{document}
