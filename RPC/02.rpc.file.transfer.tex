@@ -1,0 +1,131 @@
+\documentclass[12pt]{article}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Customizing code blocks
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{gray},
+    showstringspaces=false,
+    frame=single,
+    breaklines=true
+}
+
+\title{RPC File Transfer}
+\author{Nguyen Duc Tam - 22BI13400}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{1. Protocol Design}
+
+The protocol is designed for file transfer using a client-server model with \textbf{Remote Procedure Calls (RPC)}.
+
+\begin{verbatim}
+        +-----------------+           +-----------------+
+        |     Client      |           |     Server      |
+        +-----------------+           +-----------------+
+                |                             |
+                |      Connect via RPC        |
+                |---------------------------->|
+                |                             |
+                |    Invoke save_file RPC     |
+                |---------------------------->|
+                |                             |
+                |         Acknowledge         |
+                |<----------------------------|
+\end{verbatim}
+
+The client connects to the server, encodes the file in Base64, and sends it to the server by calling a remote method. The server decodes and saves the file locally.
+
+\section*{2. System Organization}
+
+The system consists of two components:
+\begin{itemize}
+    \item \textbf{Server:} Provides an RPC endpoint that allows the client to invoke a method for sending and saving a file.
+    \item \textbf{Client:} Encodes the file and uses RPC to send the file data to the server.
+\end{itemize}
+
+\begin{verbatim}
+            +-----------------+           +-----------------+
+            |     Client      |           |     Server      |
+            +-----------------+           +-----------------+
+                    |                             |
+                    |  Encodes and Sends File     |
+                    |---------------------------->|
+                    |                             |
+                    |       Decodes & Saves       |
+                    |<----------------------------|
+\end{verbatim}
+
+\section*{3. Implementation of File Transfer}
+
+The file transfer is implemented using Python's \texttt{xmlrpc} library. 
+
+\subsection*{Server Code}
+\begin{lstlisting}
+from xmlrpc.server import SimpleXMLRPCServer
+import base64
+
+# Set up
+host = "0.0.0.0"
+port = 12345
+output_file = "file_received.txt"
+
+# Function to receive file
+def save_file(encoded_data):
+    with open(output_file, "wb") as file:
+        file.write(base64.b64decode(encoded_data))
+    return "File received"
+
+# Initialize server
+server = SimpleXMLRPCServer((host, port))
+print(f"RPC Server is running on {host}:{port}...")
+server.register_function(save_file, "save_file")
+
+# Run the server
+server.serve_forever()
+\end{lstlisting}
+
+\subsection*{Client Code}
+\begin{lstlisting}
+import xmlrpc.client
+import base64
+
+# Set up
+host = "http://0.0.0.0"
+port = 12345
+server_url = f"{host}:{port}"
+filename = input("Input filename: ")
+
+# Initialize client
+client = xmlrpc.client.ServerProxy(server_url)
+
+# Encode file data
+with open(filename, "rb") as file:
+    encoded_data = base64.b64encode(file.read()).decode()
+
+# Send file to server
+response = client.save_file(encoded_data)
+print(response)
+\end{lstlisting}
+
+\section*{4. Advantages of RPC-Based Design}
+
+The RPC-based design improves upon the socket-based approach by:
+\begin{itemize}
+    \item Abstracting the communication protocol, making it easier to add more remote methods.
+    \item Enabling a more structured and modular approach to server-client interaction.
+    \item Providing cross-language support for better interoperability.
+\end{itemize}
+
+\section*{5. Task Distribution}
+
+The task is handled individually and locally.
+
+\end{document}
