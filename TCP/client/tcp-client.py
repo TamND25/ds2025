@@ -1,26 +1,22 @@
 import socket
 
-# Set up
-filename = input("Input filename: ")
-host="0.0.0.0"
-port=12345
-buffer_size=1024
+def setup_client(host="0.0.0.0", port=12345):
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((host, port))
+    print(f"Set up connection with {host}:{port}")
+    return client_socket
 
-# Initialize connection with server
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((host, port))
+def send_file(client_socket, filename, buffer_size=1024):
+    with open(filename, "rb") as file:
+        while True:
+            data = file.read(buffer_size)
+            if not data:
+                break
+            client_socket.sendall(data)
 
-print(f"Set up connection with {host}:{port}")
+    print("Sent successfully.")
+    client_socket.close()
 
-# Send file
-with open(filename, "rb") as file:
-    while True:
-        data = file.read(buffer_size)
-        if not data:
-            break
-        client_socket.sendall(data)
-
-print("Sent successfully.")
-
-# Close connection
-client_socket.close()
+filename = 'text.txt'
+client_socket = setup_client()
+send_file(client_socket, filename)
